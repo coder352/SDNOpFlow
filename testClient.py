@@ -1,0 +1,138 @@
+# coding:utf-8
+# 提示： 先pingall一下
+#@PydevCodeAnalysisIgnore
+from OpFlow import *
+import pprint
+pusher = StaticFlowPusher()
+ctl = Controller()
+
+def delete():
+    pusher.removeflowbyDPID()
+
+def taskFour():
+    file = open("in")
+    idx = 1
+    for line in file:
+        params = line.split(" ")
+        l = len(params)
+        for i in range(1, l - 1):
+            params[i] = '00:00:00:00:00:00:00:' + params[i]
+        params[l - 1] = params[l - 1].rstrip()
+        src = params[0]
+        dst = params[l - 1]
+        for i in range(1, l - 1):
+            switch = Switch(params[i])
+            if i == l - 2:
+                dst_port = switch.getPortToHost(params[l - 1])
+            else:
+                dst_port = switch.getPortToSwitch(params[i + 1])
+            if i == 1:
+                src_port = switch.getPortToHost(params[0])
+            else:
+                src_port = switch.getPortToSwitch(params[i - 1])
+                
+            flow = pusher.generateflow(params[i], 'flow', 1, 'output=flood')
+            del(flow['in_port'])
+            
+            # 去的路由
+            flow["name"] = 'flow' + str(idx)
+            idx = idx + 1
+            flow["ipv4_dst"] = dst
+            flow["ipv4_src"] = src
+            flow["eth_type"] = "0x0800"
+#             flow["actions"] = "output=" + str(dst_port)
+            flow["actions"] = "output=flood"
+            pusher.addflow(flow)
+            # arp 请求的流表
+            flow["name"] = 'flow' + str(idx)
+            idx = idx + 1
+            flow["eth_type"] = "0x0806" 
+            pusher.addflow(flow)
+            
+            # 回来的路由
+            flow["name"] = 'flow' + str(idx)
+            idx = idx + 1
+            flow["ipv4_dst"] = src
+            flow["ipv4_src"] = dst
+            flow["eth_type"] = "0x0800"
+#             flow["actions"] = "output=" + str(src_port)
+            flow["actions"] = "output=flood"
+            pusher.addflow(flow)
+             # arp 请求的流表
+            flow["name"] = 'flow' + str(idx)
+            idx = idx + 1
+            flow["eth_type"] = "0x0806"
+            pusher.addflow(flow)
+            
+    #         print json.dumps(flow, indent = 4) # format the json
+        print
+        
+###########################################################
+###### flow model
+flow_model = {
+    "switch": "00:00:00:00:00:00:00:01",
+    "name": "flow-mod-1",
+    "cookie": "0",
+    "priority": "32767",
+    "eth_type": "0x0800",
+    "in_port": "1",
+    "ipv4_src": "10.0.0.1",
+    "ipv4_dst": "10.0.0.3",
+    "active": "true",
+    "actions": "output=3"
+    }
+###########################################################
+
+def test():
+    flow= {
+        "switch": "00:00:00:00:00:00:00:01",
+        "name": "flow1",
+        "cookie": "0",
+        "priority": "32767",
+        "eth_type": "0x0806",
+        "active": "true",
+        "ipv4_src": "10.0.0.1",
+        "ipv4_dst": "10.0.0.2",
+        "actions": "output=2"
+        }
+    pusher.addflow(flow)
+    flow= {
+        "switch": "00:00:00:00:00:00:00:01",
+        "name": "flow2",
+        "cookie": "0",
+        "priority": "32767",
+        "eth_type": "0x0806",
+        "active": "true",
+        "ipv4_src": "10.0.0.2",
+        "ipv4_dst": "10.0.0.1",
+        "actions": "output=1"
+        }
+    pusher.addflow(flow)
+    flow= {
+        "switch": "00:00:00:00:00:00:00:01",
+        "name": "flow3",
+        "cookie": "0",
+        "priority": "32767",
+        "eth_type": "0x0800",
+        "active": "true",
+        "ipv4_src": "10.0.0.1",
+        "ipv4_dst": "10.0.0.2",
+        "actions": "output=2"
+        }
+    pusher.addflow(flow)
+    flow= {
+        "switch": "00:00:00:00:00:00:00:01",
+        "name": "flow4",
+        "cookie": "0",
+        "priority": "32767",
+        "eth_type": "0x0800",
+        "active": "true",
+        "ipv4_src": "10.0.0.2",
+        "ipv4_dst": "10.0.0.1",
+        "actions": "output=1"
+        }
+    pusher.addflow(flow)
+
+# delete()
+taskFour()
+# test()
