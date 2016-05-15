@@ -92,5 +92,5 @@ def getthepath():
 ###########################################################
 
 # delete()
-# taskFour()
-getthepath()
+taskFour()
+# getthepath()

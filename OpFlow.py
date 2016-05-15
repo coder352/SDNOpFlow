@@ -156,6 +156,7 @@ class Controller:
             if srcHost in switch.dictsPort.itervalues():
                 toHost(switch, dstHost)
                 break
+        return res
 
         for i in res:
             print i
