@@ -1,7 +1,7 @@
 # coding:utf-8
 # 提示： 先pingall一下
 #@PydevCodeAnalysisIgnore
-from OpFlow import *
+from Server import *
 import pprint
 pusher = StaticFlowPusher()
 ctl = Controller()
